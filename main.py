@@ -48,6 +48,9 @@ class ImageViewerApp(QWidget):
             #Open the SelectImagesApp window
             self.image_selector = SelectImagesApp('Custom Effect', 1)
             self.image_selector.show()
+        elif option == 'Grid Effect':
+            self.image_selector = SelectImagesApp('Grid Effect', 4)
+            self.image_selector.show()
         else:
             QMessageBox.information(self, 'Option Selected', f'You selected: {option}', QMessageBox.Ok)
 
