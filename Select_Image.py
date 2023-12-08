@@ -1,9 +1,11 @@
 import sys
+import numpy as np
 from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QLabel, QMessageBox, QLineEdit, QFileDialog
 from PyQt5.QtGui import QFont
 from PyQt5.QtCore import Qt
 from checkerboard_display import CheckerboardDisplayApp
 from grid_display import ImageGridApp
+
 class SelectImagesApp(QWidget):
     def __init__(self, effect, default_images):
         super().__init__()
@@ -59,7 +61,8 @@ class SelectImagesApp(QWidget):
                 #the user should select the grid 2x2, 3x3, 4x4
                 #This should get the selected rows and columns by the user, work on that, asking and getting okkkk
                     #maybe 3 buttons would be best for this approach
-                    self.display_window = ImageGridApp(selected_files,2,2)
+                    #self.display_window = GridSelector(selected_files)
+                    self.display_window = ImageGridApp(selected_files,int(np.sqrt(self.default_images)),int(np.sqrt(self.default_images)))
                     self.display_window.show()
             elif self.effect == 'CheckerBoard Effect':
                 if len(selected_files) == 2:

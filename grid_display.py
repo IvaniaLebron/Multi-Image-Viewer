@@ -42,8 +42,8 @@ if __name__ == '__main__':
 
     # Replace the image paths with your image paths
     image_paths = ['path_to_image1.jpg', 'path_to_image2.jpg', 'path_to_image3.jpg', 'path_to_image4.jpg']  # Add more paths as needed
-    rows = 3  # You can change the number of rows
-    cols = 3  # You can change the number of columns
+    rows = 2  # You can change the number of rows
+    cols = 2  # You can change the number of columns
 
     window = ImageGridApp(image_paths, rows, cols)
     sys.exit(app.exec_())
