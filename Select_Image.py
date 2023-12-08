@@ -58,10 +58,7 @@ class SelectImagesApp(QWidget):
             selected_files = file_dialog.selectedFiles()
 
             if self.effect == 'Grid Effect':
-                #the user should select the grid 2x2, 3x3, 4x4
-                #This should get the selected rows and columns by the user, work on that, asking and getting okkkk
-                    #maybe 3 buttons would be best for this approach
-                    #self.display_window = GridSelector(selected_files)
+                    #Open the Grid App with selected grid layout
                     self.display_window = ImageGridApp(selected_files,int(np.sqrt(self.default_images)),int(np.sqrt(self.default_images)))
                     self.display_window.show()
             elif self.effect == 'CheckerBoard Effect':

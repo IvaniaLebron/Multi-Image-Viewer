@@ -71,16 +71,12 @@ class GridSelector(QWidget):
     def change_selection(self, selection):
         self.selection = selection
         self.select_grid()
-        
-
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-
-    # Replace the image paths with your image paths
     image_paths = ['path_to_image1.jpg', 'path_to_image2.jpg', 'path_to_image3.jpg', 'path_to_image4.jpg']  # Add more paths as needed
-    rows = 2  # You can change the number of rows
-    cols = 2  # You can change the number of columns
+    rows = 2  
+    cols = 2  
 
     window = GridSelector()
     window.show()
