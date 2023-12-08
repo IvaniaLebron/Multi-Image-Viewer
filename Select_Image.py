@@ -54,29 +54,23 @@ class SelectImagesApp(QWidget):
 
         if file_dialog.exec_() == QFileDialog.Accepted:
             selected_files = file_dialog.selectedFiles()
-            needed_images = 0
-            #not good, it will always enter the if, this makes no sense ok
-            if len(selected_files) >=0:
-                if self.effect == 'Grid Effect':
-                    #This should get the selected rows and columns by the user, work on that, asking and getting okkkk
+
+            if self.effect == 'Grid Effect':
+                #the user should select the grid 2x2, 3x3, 4x4
+                #This should get the selected rows and columns by the user, work on that, asking and getting okkkk
                     #maybe 3 buttons would be best for this approach
                     self.display_window = ImageGridApp(selected_files,2,2)
                     self.display_window.show()
-                    needed_images =2
-                elif self.effect == 'CheckerBoard Effect' and len(selected_files) == 2:
+            elif self.effect == 'CheckerBoard Effect':
+                if len(selected_files) == 2:
                     # Open the CheckerboardDisplayApp with the selected images
                     self.display_window = CheckerboardDisplayApp(selected_files[0], selected_files[1])
                     self.display_window.show()
-                    #make dynamic
-                    needed_images=4
+                else:
+                    QMessageBox.information(self, 'Error', 'Please select exactly 2 images', QMessageBox.Ok)
             else:
-                QMessageBox.information(self, 'Error', f'Please select exactly {needed_images} images', QMessageBox.Ok)
-            #if len(selected_files) == 2:
-                # Open the CheckerboardDisplayApp with the selected images
-            #    self.display_window = CheckerboardDisplayApp(selected_files[0], selected_files[1])
-            #    self.display_window.show()
-            #else:
-            #    QMessageBox.information(self, 'Error', 'Please select exactly 2 images', QMessageBox.Ok)
+                #code for the other option
+                QMessageBox.information(self, 'Error', 'Please select valid option', QMessageBox.Ok)
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

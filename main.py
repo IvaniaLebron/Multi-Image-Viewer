@@ -46,7 +46,7 @@ class ImageViewerApp(QWidget):
     def show_option_selected(self, option):
         if option == 'CheckerBoard Effect':
             #Open the SelectImagesApp window
-            self.image_selector = SelectImagesApp('Custom Effect', 1)
+            self.image_selector = SelectImagesApp('CheckerBoard Effect', 1)
             self.image_selector.show()
         elif option == 'Grid Effect':
             self.image_selector = SelectImagesApp('Grid Effect', 4)
