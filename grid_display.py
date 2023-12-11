@@ -1,64 +1,85 @@
 import sys
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QLabel, QGridLayout, QSizePolicy, QLayout
-from PyQt5.QtGui import QPixmap, QMouseEvent, QImage, QPainter
-from PyQt5.QtCore import Qt, QEvent
-from PIL import Image
-import os
+from PyQt5.QtWidgets import QApplication, QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QVBoxLayout
+from PyQt5.QtGui import QImage, QPixmap, QPainter, QTransform, QColor  
+from PyQt5.QtWidgets import QRubberBand 
+from PyQt5.QtCore import Qt, QRectF, QRect
 
-class ImageGridApp(QWidget):
+
+
+class ZoomableGraphicsView(QGraphicsView):
+    def __init__(self, scene):
+        super().__init__(scene)
+        self.setRenderHint(QPainter.Antialiasing, True)
+        self.setRenderHint(QPainter.SmoothPixmapTransform, True)
+        self.setDragMode(QGraphicsView.ScrollHandDrag)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.setRenderHint(QPainter.Antialiasing, True)
+        self.setRenderHint(QPainter.SmoothPixmapTransform, True)
+        self.setRenderHint(QPainter.HighQualityAntialiasing, True)
+        self.setRenderHint(QPainter.TextAntialiasing, True)
+
+    def wheelEvent(self, event):
+        factor = 1.2
+        if event.angleDelta().y() < 0:
+            factor = 1.0 / factor
+        self.scale(factor, factor)
+
+class ImageGridApp(QGraphicsView):
     def __init__(self, image_paths, rows, cols):
         super().__init__()
 
-        self.image_paths = image_paths
         self.rows = rows
         self.cols = cols
 
-        self.images = []
-        for path in self.image_paths:
-            pixmap = QPixmap(path)
-            self.images.append(pixmap)
+        # Create a QGraphicsScene
+        self.scene = QGraphicsScene(self)
+        self.setScene(self.scene)
 
-        self.initUI()
+        # Calculate cell size
+        cell_width = 400 // cols
+        cell_height = 300 // rows
 
-    def initUI(self):
-        grid_layout = QGridLayout()
-        self.setLayout(grid_layout)
+        for i, path in enumerate(image_paths):
+            row = i // cols
+            col = i % cols
 
-        self.labels = []  # To keep references to labels for later updates
-        for i in range(self.rows):
-            for j in range(self.cols):
-                label = ClickableLabel(self, i, j)
-                label.setPixmap(self.images[(i * self.cols + j) % len(self.images)])
-                grid_layout.addWidget(label, i, j)
-                self.labels.append(label)
+            # Load the image as QImage
+            image = QImage(path)
 
-        self.setWindowTitle(f"Image Grid ({self.rows}x{self.cols})")
-        self.show()
+            # Create a QGraphicsPixmapItem for each image
+            pixmap_item = QGraphicsPixmapItem(QPixmap.fromImage(image))
+            pixmap_item.setTransformationMode(Qt.SmoothTransformation)  # Preserve image quality
+            pixmap_item.setPos(col * cell_width, row * cell_height)
 
-class ClickableLabel(QLabel):
-    def __init__(self, parent, row, col):
-        super().__init__(parent)
-        self.row = row
-        self.col = col
+            # Add the item to the scene
+            self.scene.addItem(pixmap_item)
 
-    def mousePressEvent(self, event):
-        # Handle mouse click event
-        if event.button() == Qt.LeftButton:
-            # Zoom in on the clicked image and all others in the same position
-            for label in self.parent().labels:
-                if label.row == self.row and label.col == self.col:
-                    label.setScaledContents(True)
-                    label.setFixedSize(200, 200)  # Set the desired size for zoomed images
-                else:
-                    label.setScaledContents(False)
-                    label.setFixedSize(100, 100)  # Reset the size for other images
+        # Set up the view
+        self.setFixedSize(400, 300)
+        self.setSceneRect(0, 0, 400, 300)
+
+        # Create a zoomable view
+        self.zoomable_view = ZoomableGraphicsView(self.scene)
+
+        # Set up the layout
+        layout = QVBoxLayout(self)
+        layout.addWidget(self.zoomable_view)
+
+        self.setLayout(layout)
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-
-    image_paths = ['path_to_image1.jpg', 'path_to_image2.jpg', 'path_to_image3.jpg', 'path_to_image4.jpg']
+    image_paths = ['path_to_image1.jpg', 'path_to_image2.jpg', 'path_to_image3.jpg', 'path_to_image4.jpg']  # Add more paths as needed
     rows = 2
     cols = 2
 
     window = ImageGridApp(image_paths, rows, cols)
+    window.show()
     sys.exit(app.exec_())
+
+
+
+
+
+
