@@ -1,5 +1,5 @@
 import sys
-from PyQt5.QtWidgets import QApplication, QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QWidget, QVBoxLayout, QScrollArea, QHBoxLayout, QGridLayout, QMessageBox
+from PyQt5.QtWidgets import QApplication, QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QWidget, QVBoxLayout, QScrollArea, QGridLayout
 from PyQt5.QtGui import QPixmap, QImage, QPainter
 from PyQt5.QtCore import Qt
 import cv2
@@ -33,7 +33,6 @@ class GridDisplayApp(QWidget):
 
     def initUI(self):
         grid_layout = QGridLayout(self)
-        scene = QGraphicsScene(self)
 
         for row in range(self.rows):
             for col in range(self.cols):
@@ -41,6 +40,8 @@ class GridDisplayApp(QWidget):
                 if index < len(self.image_paths):
                     image_path = self.image_paths[index]
                     pixmap = self.load_image(image_path)
+
+                    scene = QGraphicsScene(self)  # Create a new scene for each image
                     item = QGraphicsPixmapItem(pixmap)
                     scene.addItem(item)
 
@@ -84,6 +85,3 @@ if __name__ == '__main__':
         sys.exit(app.exec_())
     except Exception as e:
         print(f"Error: {str(e)}")
-
-
-
