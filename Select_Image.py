@@ -4,7 +4,7 @@ from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QLa
 from PyQt5.QtGui import QFont
 from PyQt5.QtCore import Qt
 from checkerboard_display import CheckerboardDisplayApp
-from grid_display import ImageGridApp
+from grid_display import GridDisplayApp
 
 class SelectImagesApp(QWidget):
     def __init__(self, effect, default_images):
@@ -59,7 +59,7 @@ class SelectImagesApp(QWidget):
 
             if self.effect == 'Grid Effect':
                     #Open the Grid App with selected grid layout
-                    self.display_window = ImageGridApp(selected_files,int(np.sqrt(self.default_images)),int(np.sqrt(self.default_images)))
+                    self.display_window = GridDisplayApp(selected_files,int(np.sqrt(self.default_images)),int(np.sqrt(self.default_images)))
                     self.display_window.show()
             elif self.effect == 'CheckerBoard Effect':
                 if len(selected_files) == 2:
