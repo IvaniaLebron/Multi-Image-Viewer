@@ -1,5 +1,5 @@
 import sys
-from PyQt5.QtWidgets import QApplication, QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QWidget, QVBoxLayout, QMessageBox
+from PyQt5.QtWidgets import QApplication, QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QWidget, QVBoxLayout, QScrollArea, QHBoxLayout, QGridLayout, QMessageBox
 from PyQt5.QtGui import QPixmap, QImage, QPainter
 from PyQt5.QtCore import Qt
 import cv2
@@ -32,7 +32,7 @@ class GridDisplayApp(QWidget):
         self.initUI()
 
     def initUI(self):
-        grid_layout = QVBoxLayout(self)
+        grid_layout = QGridLayout(self)
         scene = QGraphicsScene(self)
 
         for row in range(self.rows):
@@ -49,9 +49,19 @@ class GridDisplayApp(QWidget):
                     view.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
                     view.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
 
-                    grid_layout.addWidget(view)
+                    grid_layout.addWidget(view, row, col)
 
-        self.setLayout(grid_layout)
+        widget = QWidget(self)
+        widget.setLayout(grid_layout)
+
+        scroll_area = QScrollArea(self)
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setWidget(widget)
+
+        layout = QVBoxLayout(self)
+        layout.addWidget(scroll_area)
+
+        self.setLayout(layout)
 
     def load_image(self, path):
         img = cv2.imread(path)
@@ -74,5 +84,6 @@ if __name__ == '__main__':
         sys.exit(app.exec_())
     except Exception as e:
         print(f"Error: {str(e)}")
+
 
 
