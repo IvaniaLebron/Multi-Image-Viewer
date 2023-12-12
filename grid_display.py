@@ -4,6 +4,10 @@ from PyQt5.QtGui import QPixmap, QImage, QPainter
 from PyQt5.QtCore import Qt, pyqtSignal
 import cv2
 
+from PyQt5.QtWidgets import QGraphicsView, QGraphicsScene, QGraphicsPixmapItem
+from PyQt5.QtCore import Qt, pyqtSignal
+from PyQt5.QtGui import QWheelEvent
+
 class ZoomableGraphicsView(QGraphicsView):
     zoomChanged = pyqtSignal(float)
 
@@ -16,14 +20,25 @@ class ZoomableGraphicsView(QGraphicsView):
         self.setResizeAnchor(QGraphicsView.AnchorUnderMouse)
         self.global_zoom_factor = 1.0  # Initialize the global zoom factor
 
-    def wheelEvent(self, event):
-        factor = 1.2
-        if event.angleDelta().y() < 0:
-            factor = 1.0 / factor
+        self.setInteractive(True)  # Enable mouse events
 
+    def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            # Zoom in on left-click
+            self.zoom(1.5)
+        elif event.button() == Qt.RightButton:
+            # Zoom out on right-click
+            self.zoom(1 / 1.5)
+
+    def wheelEvent(self, event: QWheelEvent):
+        # Disable the default wheel behavior to prevent unwanted scrolling
+        event.accept()
+
+    def zoom(self, factor):
         self.setTransform(self.transform().scale(factor, factor))
         self.global_zoom_factor = self.transform().m11()
         self.zoomChanged.emit(self.global_zoom_factor)
+
 
 class GridDisplayApp(QWidget):
     def __init__(self, image_paths, rows, cols):
@@ -41,6 +56,8 @@ class GridDisplayApp(QWidget):
     def initUI(self):
         grid_layout = QGridLayout(self)
         self.views = []
+
+        reference_view = None  # Store the reference view for zoom synchronization
 
         for row in range(self.rows):
             for col in range(self.cols):
@@ -60,6 +77,12 @@ class GridDisplayApp(QWidget):
 
                     view.zoomChanged.connect(self.handleZoomChange)
                     self.views.append(view)
+
+                    if reference_view is None:
+                        reference_view = view
+                    else:
+                        # Synchronize viewports
+                        view.setSceneRect(reference_view.sceneRect())
 
         widget = QWidget(self)
         widget.setLayout(grid_layout)
@@ -88,16 +111,9 @@ class GridDisplayApp(QWidget):
             relative_zoom = zoom_factor / view.global_zoom_factor
             view.setTransform(view.transform().scale(relative_zoom, relative_zoom))
 
-        # Adjust the scene rect to update the zoom level for all views
-        rect = self.views[0].sceneRect()
-        for view in self.views[1:]:
-            rect = rect.united(view.sceneRect())
-
-        for view in self.views:
-            view.setSceneRect(rect)
+            # Adjust the scene rect to update the zoom level for all views
+            view.setSceneRect(self.views[0].sceneRect())
             view.global_zoom_factor = zoom_factor
-
-
 
 if __name__ == '__main__':
     try:
