@@ -21,13 +21,7 @@ class ZoomableGraphicsView(QGraphicsView):
         if event.angleDelta().y() < 0:
             factor = 1.0 / factor
 
-        # Get the position of the mouse cursor in the scene
-        mouse_scene_pos = self.mapToScene(event.pos())
-
-        # Apply the zoom centered around the mouse cursor
-        self.setTransformationAnchor(QGraphicsView.AnchorUnderMouse)
-        self.setTransform(self.transform().translate(mouse_scene_pos.x(), mouse_scene_pos.y()).scale(factor, factor).translate(-mouse_scene_pos.x(), -mouse_scene_pos.y()))
-
+        self.setTransform(self.transform().scale(factor, factor))
         self.global_zoom_factor = self.transform().m11()
         self.zoomChanged.emit(self.global_zoom_factor)
 
@@ -90,9 +84,20 @@ class GridDisplayApp(QWidget):
 
     def handleZoomChange(self, zoom_factor):
         for view in self.views:
-            if view.global_zoom_factor != zoom_factor:
-                view.setTransform(view.transform().scale(zoom_factor, zoom_factor))
-                view.global_zoom_factor = zoom_factor
+            # Calculate the relative zoom factor based on the original zoom level
+            relative_zoom = zoom_factor / view.global_zoom_factor
+            view.setTransform(view.transform().scale(relative_zoom, relative_zoom))
+
+        # Adjust the scene rect to update the zoom level for all views
+        rect = self.views[0].sceneRect()
+        for view in self.views[1:]:
+            rect = rect.united(view.sceneRect())
+
+        for view in self.views:
+            view.setSceneRect(rect)
+            view.global_zoom_factor = zoom_factor
+
+
 
 if __name__ == '__main__':
     try:
