@@ -2,7 +2,12 @@ import sys
 from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QLabel, QMessageBox
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtCore import Qt
+import Select_Image
+from grid_select import GridSelector
+from Image_View import ImageViewApp
 from Select_Image import SelectImagesApp
+from grid_display import GridDisplayApp
+from checkerboard_display import CheckerboardDisplayApp
 class ImageViewerApp(QWidget):
     def __init__(self):
         super().__init__()
@@ -15,13 +20,13 @@ class ImageViewerApp(QWidget):
         label = QLabel('Choose an Operation:', self)
         self.style_label(label)
 
-        btn_checkerboard = QPushButton('View Image', self)
-        btn_checkerboard.clicked.connect(lambda: self.show_option_selected('View Image'))
-        self.style_button(btn_checkerboard)
-
-        btn_image_view = QPushButton('CheckerBoard Effect', self)
-        btn_image_view.clicked.connect(lambda: self.show_option_selected('CheckerBoard Effect'))
+        btn_image_view = QPushButton('View Image', self)
+        btn_image_view.clicked.connect(lambda: self.show_option_selected('View Image'))
         self.style_button(btn_image_view)
+
+        btn_checkerboard = QPushButton('CheckerBoard Effect', self)
+        btn_checkerboard.clicked.connect(lambda: self.show_option_selected('CheckerBoard Effect'))
+        self.style_button(btn_checkerboard)
 
         btn_grid = QPushButton('Grid Effect', self)
         btn_grid.clicked.connect(lambda: self.show_option_selected('Grid Effect'))
@@ -46,7 +51,13 @@ class ImageViewerApp(QWidget):
     def show_option_selected(self, option):
         if option == 'CheckerBoard Effect':
             #Open the SelectImagesApp window
-            self.image_selector = SelectImagesApp('Custom Effect', 1)
+            self.image_selector = Select_Image.SelectImagesApp('CheckerBoard Effect', 2)
+            self.image_selector.show()
+        elif option == 'Grid Effect':
+            self.image_selector = GridSelector()
+            self.image_selector.show()
+        elif option == 'View Image':
+            self.image_selector = ImageViewApp()
             self.image_selector.show()
         else:
             QMessageBox.information(self, 'Option Selected', f'You selected: {option}', QMessageBox.Ok)
