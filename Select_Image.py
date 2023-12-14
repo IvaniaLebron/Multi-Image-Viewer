@@ -1,11 +1,16 @@
 import sys
+import numpy as np
 from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QLabel, QMessageBox, QLineEdit, QFileDialog
 from PyQt5.QtGui import QFont
 from PyQt5.QtCore import Qt
 from checkerboard_display import CheckerboardDisplayApp
+from grid_display import GridDisplayApp
+
 class SelectImagesApp(QWidget):
     def __init__(self, effect, default_images):
         super().__init__()
+        self.effect = effect
+        self.default_images = default_images
 
         # Set window properties
         self.setWindowTitle(f'Select Images for {effect}')
@@ -51,12 +56,21 @@ class SelectImagesApp(QWidget):
 
         if file_dialog.exec_() == QFileDialog.Accepted:
             selected_files = file_dialog.selectedFiles()
-            if len(selected_files) == 2:
-                # Open the CheckerboardDisplayApp with the selected images
-                self.display_window = CheckerboardDisplayApp(selected_files[0], selected_files[1])
-                self.display_window.show()
+
+            if self.effect == 'Grid Effect':
+                    #Open the Grid App with selected grid layout
+                    self.display_window = GridDisplayApp(selected_files,int(np.sqrt(self.default_images)),int(np.sqrt(self.default_images)))
+                    self.display_window.show()
+            elif self.effect == 'CheckerBoard Effect':
+                if len(selected_files) == 2:
+                    # Open the CheckerboardDisplayApp with the selected images
+                    self.display_window = CheckerboardDisplayApp(selected_files[0], selected_files[1])
+                    self.display_window.show()
+                else:
+                    QMessageBox.information(self, 'Error', 'Please select exactly 2 images', QMessageBox.Ok)
             else:
-                QMessageBox.information(self, 'Error', 'Please select exactly 2 images', QMessageBox.Ok)
+                #code for the other option
+                QMessageBox.information(self, 'Error', 'Please select valid option', QMessageBox.Ok)
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

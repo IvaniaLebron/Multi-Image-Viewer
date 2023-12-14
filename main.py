@@ -3,6 +3,8 @@ from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QLa
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtCore import Qt
 from Select_Image import SelectImagesApp
+from grid_select import GridSelector
+
 class ImageViewerApp(QWidget):
     def __init__(self):
         super().__init__()
@@ -46,7 +48,10 @@ class ImageViewerApp(QWidget):
     def show_option_selected(self, option):
         if option == 'CheckerBoard Effect':
             #Open the SelectImagesApp window
-            self.image_selector = SelectImagesApp('Custom Effect', 1)
+            self.image_selector = SelectImagesApp('CheckerBoard Effect', 1)
+            self.image_selector.show()
+        elif option == 'Grid Effect':
+            self.image_selector = GridSelector()
             self.image_selector.show()
         else:
             QMessageBox.information(self, 'Option Selected', f'You selected: {option}', QMessageBox.Ok)
