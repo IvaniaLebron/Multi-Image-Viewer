@@ -1,58 +1,86 @@
 import sys
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QLabel, QMessageBox
-from PyQt5.QtGui import QPixmap
-from PyQt5.QtCore import Qt
-from Select_Image import SelectImagesApp
-class ImageViewerApp(QWidget):
-    def __init__(self):
+from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QLabel, QPushButton, QFileDialog, QMessageBox
+from PyQt5.QtGui import QPixmap, QPainter
+from PyQt5.QtCore import Qt, QRect
+
+class CheckerboardDisplayApp(QWidget):
+    def __init__(self, image_path1, image_path2, square_size):
         super().__init__()
 
+        self.image1 = QPixmap(image_path1)
+        self.image2 = QPixmap(image_path2)
+        self.square_size = square_size
+
+        # Use dimensions of the larger image for the checkerboard
+        self.checkerboard_width = max(self.image1.width(), self.image2.width())
+        self.checkerboard_height = max(self.image1.height(), self.image2.height())
+
         # Set window properties
-        self.setWindowTitle('Image Viewer and Manipulator')
-        self.setGeometry(100, 100, 600, 400)
+        self.setWindowTitle('Checkerboard Image Display')
+        self.setGeometry(100, 100, self.checkerboard_width, self.checkerboard_height)
 
-        # Create widgets
-        label = QLabel('Choose an Operation:', self)
-        self.style_label(label)
+        # Create a label to display the checkerboard image
+        self.label = QLabel(self)
+        self.label.setScaledContents(True)  # Enable scaling of the label's content
+        self.original_pixmap = self.display_checkerboard(self.checkerboard_width, self.checkerboard_height)
+        self.label.setPixmap(self.original_pixmap)
 
-        btn_checkerboard = QPushButton('View Image', self)
-        btn_checkerboard.clicked.connect(lambda: self.show_option_selected('View Image'))
-        self.style_button(btn_checkerboard)
-
-        btn_image_view = QPushButton('CheckerBoard Effect', self)
-        btn_image_view.clicked.connect(lambda: self.show_option_selected('CheckerBoard Effect'))
-        self.style_button(btn_image_view)
-
-        btn_grid = QPushButton('Grid Effect', self)
-        btn_grid.clicked.connect(lambda: self.show_option_selected('Grid Effect'))
-        self.style_button(btn_grid)
+        # Create a button for saving the image
+        self.save_button = QPushButton('Save Image', self)
+        self.save_button.clicked.connect(self.save_image)
 
         # Set up the layout
         layout = QVBoxLayout(self)
-        layout.addWidget(label, alignment=Qt.AlignCenter)
-        layout.addWidget(btn_checkerboard)
-        layout.addWidget(btn_image_view)
-        layout.addWidget(btn_grid)
-
+        layout.addWidget(self.label)
+        layout.addWidget(self.save_button)
         self.setLayout(layout)
 
-    def style_label(self, label):
-        label.setAlignment(Qt.AlignCenter)
-        label.setStyleSheet("font-size: 20px; margin-bottom: 20px; color: #333;")
+    def display_checkerboard(self, width, height):
+        # Create a new QPixmap to hold the checkerboard pattern
+        checkerboard = QPixmap(width, height)
+        checkerboard.fill(Qt.white)
+        painter = QPainter(checkerboard)
 
-    def style_button(self, button):
-        button.setStyleSheet("font-size: 16px; padding: 15px; margin: 10px; background-color: #3498db; color: white; border: 2px solid #2980b9; border-radius: 8px;")
+        # Draw a basic checkerboard
+        for row in range(0, height, self.square_size):
+            for col in range(0, width, self.square_size):
+                rect = QRect(col, row, self.square_size, self.square_size)
 
-    def show_option_selected(self, option):
-        if option == 'CheckerBoard Effect':
-            #Open the SelectImagesApp window
-            self.image_selector = SelectImagesApp('CheckerBoard Effect', 2)
-            self.image_selector.show()
-        else:
-            QMessageBox.information(self, 'Option Selected', f'You selected: {option}', QMessageBox.Ok)
+                # Decide wich image to use for this square
+                image_to_use = self.image1 if (row // self.square_size + col // self.square_size) % 2 == 0 else self.image2
+
+                source_x = min((image_to_use.width() // (width // self.square_size)) * (col // self.square_size),
+                               image_to_use.width() - self.square_size)
+                source_y = min((image_to_use.height() // (height // self.square_size)) * (row // self.square_size),
+                               image_to_use.height() - self.square_size)
+                source_rect = QRect(source_x, source_y, self.square_size, self.square_size)
+
+                painter.drawPixmap(rect, image_to_use, source_rect)
+
+        painter.end()
+        return checkerboard
+
+    def resizeEvent(self, event):
+        # Calculate new size while maintaining the aspect ratio of the original pixmap
+        new_width = min(self.width(), self.original_pixmap.width())
+        new_height = int(new_width * (self.original_pixmap.height() / self.original_pixmap.width()))
+
+        # Scale the pixmap to the new size using nearest neighbor interpolation
+        scaled_pixmap = self.original_pixmap.scaled(new_width, new_height, Qt.KeepAspectRatio, Qt.FastTransformation)
+        self.label.setPixmap(scaled_pixmap)
+
+        super().resizeEvent(event)
+
+    def save_image(self):
+        options = QFileDialog.Options()
+        file_path, _ = QFileDialog.getSaveFileName(self, "Save Image", "", "JPEG Files (*.jpg);;PNG Files (*.png)",
+                                                   options=options)
+        if file_path:
+            self.checkerboard_pixmap.save(file_path)
+
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    window = ImageViewerApp()
+    window = CheckerboardDisplayApp('path_to_image1.jpg', 'path_to_image2.jpg',8)  # Replace with actual paths and number of squares
     window.show()
     sys.exit(app.exec_())
