@@ -31,8 +31,13 @@ class ZoomableGraphicsView(QGraphicsView):
             self.zoom(1 / 1.5)
 
     def wheelEvent(self, event: QWheelEvent):
-        # Disable the default wheel behavior to prevent unwanted scrolling
-        event.accept()
+        factor = 1.2
+        if event.angleDelta().y() < 0:
+            factor = 1.0 / factor
+
+        self.setTransform(self.transform().scale(factor, factor))
+        self.global_zoom_factor = self.transform().m11()
+        self.zoomChanged.emit(self.global_zoom_factor)
 
     def zoom(self, factor):
         self.setTransform(self.transform().scale(factor, factor))
