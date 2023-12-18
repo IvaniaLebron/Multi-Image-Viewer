@@ -78,10 +78,13 @@ class SelectImagesApp(QWidget):
                                             QMessageBox.Ok)
             elif self.effect == 'Grid Effect':
                 # Open the Grid App with selected grid layout
-                self.display_window = GridDisplayApp(selected_files, int(np.sqrt(self.default_images)),
-                                                    int(np.sqrt(self.default_images)))
-                self.display_window.show()
-
+                rows_and_columns = int(np.sqrt(self.default_images))
+                if len(selected_files) == self.default_images:
+                    self.display_window = GridDisplayApp(selected_files, rows_and_columns,
+                                                    rows_and_columns)
+                    self.display_window.show()
+                else:
+                    QMessageBox.information(self, 'Error', f'Please select exactly {self.default_images} images for your selected Grid Display', QMessageBox.Ok)
             else:
                 # Code for the other option
                 QMessageBox.information(self, 'Error', 'Please select a valid option', QMessageBox.Ok)
