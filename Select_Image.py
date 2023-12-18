@@ -9,6 +9,7 @@ from grid_display import GridDisplayApp
 class SelectImagesApp(QWidget):
     def __init__(self, effect, default_images):
         super().__init__()
+        self.display_window = None
         self.effect = effect
         self.default_images = default_images
 
@@ -35,6 +36,11 @@ class SelectImagesApp(QWidget):
 
         self.setLayout(layout)
 
+        # Change to an input field for square size
+        self.square_size_input = QLineEdit(self)
+        self.square_size_input.setPlaceholderText("Enter size of squares (in pixels)")
+        self.square_size_input.setVisible(effect == 'CheckerBoard Effect')
+        layout.addWidget(self.square_size_input)
     def style_label(self, label):
         label.setStyleSheet("font-size: 20px; margin-bottom: 10px; color: #333;")
 
@@ -57,25 +63,39 @@ class SelectImagesApp(QWidget):
         if file_dialog.exec_() == QFileDialog.Accepted:
             selected_files = file_dialog.selectedFiles()
 
-            if self.effect == 'Grid Effect':
-                    #Open the Grid App with selected grid layout
-                    self.display_window = GridDisplayApp(selected_files,int(np.sqrt(self.default_images)),int(np.sqrt(self.default_images)))
-                    self.display_window.show()
-            elif self.effect == 'CheckerBoard Effect':
+            if self.effect == 'CheckerBoard Effect':
                 if len(selected_files) == 2:
-                    # Open the CheckerboardDisplayApp with the selected images
-                    self.display_window = CheckerboardDisplayApp(selected_files[0], selected_files[1])
+                    try:
+                        square_size = int(self.square_size_input.text())
+                    except ValueError:
+                        QMessageBox.information(self, 'Error', 'Invalid square size', QMessageBox.Ok)
+                        return
+                    # Open the CheckerboardDisplayApp with the selected images and square size
+                    self.display_window = CheckerboardDisplayApp(selected_files[0], selected_files[1], square_size)
                     self.display_window.show()
                 else:
-                    QMessageBox.information(self, 'Error', 'Please select exactly 2 images', QMessageBox.Ok)
+                    QMessageBox.information(self, 'Error', 'Please select exactly 2 images for Checkerboard Effect',
+                                            QMessageBox.Ok)
+            elif self.effect == 'Grid Effect':
+                # Open the Grid App with selected grid layout
+                rows_and_columns = int(np.sqrt(self.default_images))
+                if len(selected_files) == self.default_images:
+                    self.display_window = GridDisplayApp(selected_files, rows_and_columns,
+                                                    rows_and_columns)
+                    self.display_window.show()
+                else:
+                    QMessageBox.information(self, 'Error', f'Please select exactly {self.default_images} images for your selected Grid Display', QMessageBox.Ok)
+
             else:
-                #code for the other option
-                QMessageBox.information(self, 'Error', 'Please select valid option', QMessageBox.Ok)
+                # Code for the other option
+                QMessageBox.information(self, 'Error', 'Please select a valid option', QMessageBox.Ok)
+
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    effect = 'Grid Effect'
+    effect = 'CheckerBoard Effect'
     default_images = 2
     window = SelectImagesApp(effect, default_images)
     window.show()
     sys.exit(app.exec_())
+
