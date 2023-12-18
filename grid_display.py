@@ -107,14 +107,11 @@ class GridDisplayApp(QWidget):
         img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         height, width, channel = img.shape
         bytes_per_line = 3 * width
-        """"
-        qimg = QImage(img_rgb.data, width, height, bytes_per_line, QImage.Format_RGB888)
-        pixmap = QPixmap.fromImage(qimg)"""
-        # Calculate the width to maintain aspect ratio for the given height
+
         desired_height = self.size().height() / self.rows  # Get the height of the square
         scaled_width = int(width * (desired_height / height))
 
-        # Create QImage with specific interpolation method (Qt.AA_Scaled uses bilinear interpolation by default)
+        # Creating QImage with specific interpolation method (Qt.AA_Scaled uses bilinear interpolation by default)
         qimg = QImage(img_rgb.data, width, height, bytes_per_line, QImage.Format_RGB888)
         pixmap = QPixmap.fromImage(qimg).scaled(scaled_width, int(desired_height),
                                             aspectRatioMode=Qt.IgnoreAspectRatio,
