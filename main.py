@@ -4,7 +4,7 @@ from PyQt5.QtGui import QPixmap
 from PyQt5.QtCore import Qt
 import Select_Image
 from grid_select import GridSelector
-from Image_View import ImageViewApp
+#from Image_View import ImageViewApp
 from Select_Image import SelectImagesApp
 from grid_display import GridDisplayApp
 from checkerboard_display import CheckerboardDisplayApp
@@ -57,7 +57,7 @@ class ImageViewerApp(QWidget):
             self.image_selector = GridSelector()
             self.image_selector.show()
         elif option == 'View Image':
-            self.image_selector = ImageViewApp()
+            #self.image_selector = ImageViewApp()
             self.image_selector.show()
         else:
             QMessageBox.information(self, 'Option Selected', f'You selected: {option}', QMessageBox.Ok)
