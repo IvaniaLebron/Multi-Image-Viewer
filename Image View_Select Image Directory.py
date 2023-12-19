@@ -1,85 +1,96 @@
 import sys
 import os
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QLabel, QPushButton, QHBoxLayout, QFileDialog
+from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QPushButton, QFileDialog
 from PyQt5.QtGui import QPixmap
-from PyQt5.QtCore import Qt, QPropertyAnimation, QTimer
+from PyQt5.QtCore import QPropertyAnimation, QRect, Qt
 
-class ImageViewer(QWidget):
+class ImageViewApp(QWidget):
     def __init__(self):
         super().__init__()
-        
-        # List to hold paths of images in the selected directory
-        self.image_paths = []
-        self.current_index = 0
-        self.init_ui()
 
-    def init_ui(self):
-        self.layout = QVBoxLayout()
+        self.setWindowTitle('Image Viewer')
+        self.setGeometry(100, 100, 800, 600)
 
-        self.image_label = QLabel()
-        self.layout.addWidget(self.image_label)
+        self.current_label = QLabel(self)
+        self.current_label.setGeometry(0, 0, 800, 600)
+        self.current_label.setScaledContents(True)
 
-        self.prev_button = QPushButton('Previous')
-        self.prev_button.clicked.connect(self.show_previous_image)
-        
-        self.next_button = QPushButton('Next')
-        self.next_button.clicked.connect(self.show_next_image)
+        self.next_label = QLabel(self)
+        self.next_label.setGeometry(800, 0, 800, 600)  # Start off-screen
+        self.next_label.setScaledContents(True)
 
-        # Horizontal layout to arrange the buttons
-        self.button_layout = QHBoxLayout()
-        self.button_layout.addWidget(self.prev_button)
-        self.button_layout.addWidget(self.next_button)
+        self.next_button = QPushButton(">", self)
+        self.next_button.clicked.connect(lambda: self.change_image(1))
+        self.next_button.setGeometry(760, 280, 40, 40)
 
-        self.layout.addLayout(self.button_layout)
+        self.prev_button = QPushButton("<", self)
+        self.prev_button.clicked.connect(lambda: self.change_image(-1))
+        self.prev_button.setGeometry(0, 280, 40, 40)
 
-        self.setLayout(self.layout)
+        self.image_folder = None
+        self.image_files = []
+        self.current_image_index = -1
+        self.animations = []  # Keep references to animations
 
-        self.select_image_directory()
+        self.select_image_folder()
 
-    def select_image_directory(self):
-        options = QFileDialog.Options()
-        directory = QFileDialog.getExistingDirectory(self, "Select Image Directory", options=options)
-        if directory:
-            self.image_paths = [os.path.join(directory, file) for file in os.listdir(directory)
-                                if file.lower().endswith(('.png', '.jpg', '.jpeg', '.gif'))]
-            if self.image_paths:
-                self.show_image(self.current_index)
+    def select_image_folder(self):
+        folder = QFileDialog.getExistingDirectory(self, "Select Image Folder")
+        if folder:
+            self.image_folder = folder
+            self.load_images(folder)
+            self.show_image(0)
+
+    def load_images(self, folder):
+        self.image_files = [f for f in os.listdir(folder) if os.path.isfile(os.path.join(folder, f)) and f.lower().endswith(('.png', '.jpg', '.jpeg', '.bmp', '.gif'))]
+        self.image_files.sort()
 
     def show_image(self, index):
-        pixmap = QPixmap(self.image_paths[index])
-        self.image_label.setPixmap(pixmap.scaledToWidth(800))
-        self.image_label.setAlignment(Qt.AlignCenter)
+        if 0 <= index < len(self.image_files):
+            image_path = os.path.join(self.image_folder, self.image_files[index])
+            pixmap = QPixmap(image_path)
+            self.current_label.setPixmap(pixmap.scaled(800, 600, Qt.KeepAspectRatio, Qt.FastTransformation))
+            self.current_image_index = index
 
-    def show_previous_image(self):
-        if self.current_index > 0:
-            self.current_index -= 1
-            self.slide_images("right")
+    def change_image(self, direction):
+        new_index = self.current_image_index + direction
+        if 0 <= new_index < len(self.image_files):
+            next_image_path = os.path.join(self.image_folder, self.image_files[new_index])
+            next_pixmap = QPixmap(next_image_path)
+            self.next_label.setPixmap(next_pixmap.scaled(800, 600, Qt.KeepAspectRatio, Qt.FastTransformation))
+            self.prepare_next_image(new_index)
+            self.start_animation(direction)
+            self.current_image_index = new_index
 
-    def show_next_image(self):
-        if self.current_index < len(self.image_paths) - 1:
-            self.current_index += 1
-            self.slide_images("left")
+    def prepare_next_image(self, new_index):
+        next_image_path = os.path.join(self.image_folder, self.image_files[new_index])
+        next_pixmap = QPixmap(next_image_path)
+        self.next_label.setPixmap(next_pixmap.scaled(800, 600, Qt.KeepAspectRatio, Qt.FastTransformation))
+        self.next_label.lower()  # Ensure this label is behind the current_label
 
-    def slide_images(self, direction):
-        start_value = self.image_label.geometry()
-        end_value = start_value.translated(-self.width() if direction == "left" else self.width(), 0)
+    def start_animation(self, direction):
+        current_end_pos = QRect(-800 if direction > 0 else 800, 0, 800, 600)
+        next_start_pos = QRect(0, 0, 800, 600)
+        next_end_pos = QRect(-800 if direction > 0 else 800, 0, 800, 600)
 
-         # Create a property animation for sliding effect
-        animation = QPropertyAnimation(self.image_label, b"geometry")
-        animation.setDuration(300)
-        animation.setStartValue(start_value)
-        animation.setEndValue(end_value)
+        self.animate_label(self.current_label, self.current_label.geometry(), current_end_pos)
+        self.next_label.setGeometry(next_start_pos)
+        self.animate_label(self.next_label, next_start_pos, QRect(0, 0, 800, 600))
 
+        self.current_label, self.next_label = self.next_label, self.current_label
+
+    def animate_label(self, label, start_rect, end_rect):
+        animation = QPropertyAnimation(label, b"geometry")
+        animation.setDuration(1000)
+        animation.setStartValue(start_rect)
+        animation.setEndValue(end_rect)
         animation.start()
-        QTimer.singleShot(300, lambda: self.show_image(self.current_index))
 
-def main():
-    app = QApplication(sys.argv)
-    viewer = ImageViewer()
-    viewer.show()
-    sys.exit(app.exec_())
+        self.animations.append(animation)
+        animation.finished.connect(lambda: self.animations.remove(animation))
 
 if __name__ == '__main__':
-    main()
-
-
+    app = QApplication(sys.argv)
+    window = ImageViewApp()
+    window.show()
+    sys.exit(app.exec_())
