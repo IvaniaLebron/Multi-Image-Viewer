@@ -4,7 +4,8 @@ from PyQt5.QtGui import QPixmap
 from PyQt5.QtCore import Qt
 import Select_Image
 from grid_select import GridSelector
-#from Image_View import ImageViewApp
+from Image_comp import ImageComparatorApp
+from Image_View import ImageViewApp
 from Select_Image import SelectImagesApp
 from grid_display import GridDisplayApp
 from checkerboard_display import CheckerboardDisplayApp
@@ -13,6 +14,7 @@ class ImageViewerApp(QWidget):
         super().__init__()
 
         # Set window properties
+        self.image_selector = None
         self.setWindowTitle('Image Viewer and Manipulator')
         self.setGeometry(100, 100, 600, 400)
 
@@ -31,14 +33,18 @@ class ImageViewerApp(QWidget):
         btn_grid = QPushButton('Grid Effect', self)
         btn_grid.clicked.connect(lambda: self.show_option_selected('Grid Effect'))
         self.style_button(btn_grid)
-
+        
+        btn_img_comp = QPushButton('Image Compair', self)
+        btn_img_comp.clicked.connect(lambda: self.show_option_selected('Image Compair'))
+        self.style_button(btn_img_comp)
+        
         # Set up the layout
         layout = QVBoxLayout(self)
         layout.addWidget(label, alignment=Qt.AlignCenter)
         layout.addWidget(btn_checkerboard)
         layout.addWidget(btn_image_view)
         layout.addWidget(btn_grid)
-
+        layout.addWidget(btn_img_comp)
         self.setLayout(layout)
 
     def style_label(self, label):
@@ -57,7 +63,10 @@ class ImageViewerApp(QWidget):
             self.image_selector = GridSelector()
             self.image_selector.show()
         elif option == 'View Image':
-            #self.image_selector = ImageViewApp()
+            self.image_selector = ImageViewApp()
+            self.image_selector.show()
+        elif option == 'Image Compair':
+            self.image_selector = ImageComparatorApp()
             self.image_selector.show()
         else:
             QMessageBox.information(self, 'Option Selected', f'You selected: {option}', QMessageBox.Ok)
