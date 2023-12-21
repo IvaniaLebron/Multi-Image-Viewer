@@ -34,12 +34,27 @@ class ImageViewApp(QWidget):
 
         self.select_image_folder()
 
-    def select_image_folder(self):
-        folder = QFileDialog.getExistingDirectory(self, "Select Image Folder")
-        if folder:
-            self.image_folder = folder
-            self.load_images(folder)
-            self.show_image(0)
+      def select_image_folder(self):
+        while True:
+            folder = QFileDialog.getExistingDirectory(self, "Select Image Folder")
+
+            # Check if the user canceled the folder selection
+            if not folder:
+                break
+            # Check if the folder contains any image files
+            image_extensions = ["*.png", "*.jpg", "*.jpeg", "*.bmp", "*.gif"]
+            image_files = []
+            for extension in image_extensions:
+                image_files.extend(glob.glob(os.path.join(folder, extension)))
+            if not image_files:
+                # No images found in the folder, show a message box and restart the loop
+                QMessageBox.warning(self, "No Images", "Please select a folder which has images.")
+            else:
+                # Images found, set the folder and load images
+                self.image_folder = folder
+                self.load_images(folder)
+                self.show_image(0)
+                break  # Exit the loop since a valid folder has been selected
 
     def load_images(self, folder):
         self.image_files = [f for f in os.listdir(folder) if os.path.isfile(os.path.join(folder, f)) and f.lower().endswith(('.png', '.jpg', '.jpeg', '.bmp', '.gif'))]
