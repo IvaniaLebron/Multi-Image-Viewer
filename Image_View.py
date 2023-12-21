@@ -1,6 +1,7 @@
+import glob
 import sys
 import os
-from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QPushButton, QFileDialog
+from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QPushButton, QFileDialog, QMessageBox
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtCore import QPropertyAnimation, QRect, Qt
 
@@ -34,7 +35,7 @@ class ImageViewApp(QWidget):
 
         self.select_image_folder()
 
-      def select_image_folder(self):
+    def select_image_folder(self):
         while True:
             folder = QFileDialog.getExistingDirectory(self, "Select Image Folder")
 
