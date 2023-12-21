@@ -7,7 +7,15 @@ from PyQt5.QtCore import Qt, QRect
 class CheckerboardDisplayApp(QWidget):
     def __init__(self, image_path1, image_path2, square_size):
         super().__init__()
+        
+        # Check if exactly two images have been provided
+        if not image_path1 or not image_path2:
+            raise ValueError("Exactly two images must be provided")
 
+        # Check that square_size is a positive number
+        if not isinstance(square_size, int) or square_size <= 0:
+            raise ValueError("square_size must be a positive integer")
+            
         self.image1 = QPixmap(image_path1)
         self.image2 = QPixmap(image_path2)
         self.square_size = square_size
