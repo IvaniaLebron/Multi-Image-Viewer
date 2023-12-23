@@ -1,5 +1,6 @@
 import sys
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QLabel, QPushButton, QFileDialog, QMessageBox
+from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QLabel, QPushButton, QFileDialog, QMessageBox, \
+    QSizePolicy
 from PyQt5.QtGui import QPixmap, QPainter
 from PyQt5.QtCore import Qt, QRect
 
@@ -25,6 +26,12 @@ class CheckerboardDisplayApp(QWidget):
         self.original_pixmap = self.display_checkerboard(self.checkerboard_width, self.checkerboard_height)
         self.label.setPixmap(self.original_pixmap)
 
+        # Set minimum size for label to allow shrinking
+        self.label.setMinimumSize(1, 1)
+
+        # Set size policy to allow dynamic expanding and shrinking
+        self.label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+
         # Create a button for saving the image
         self.save_button = QPushButton('Save Image', self)
         self.save_button.clicked.connect(self.save_image)
@@ -34,6 +41,7 @@ class CheckerboardDisplayApp(QWidget):
         layout.addWidget(self.label)
         layout.addWidget(self.save_button)
         self.setLayout(layout)
+        self.user_resizing = True
 
     def display_checkerboard(self, width, height):
         # Create a new QPixmap to hold the checkerboard pattern
@@ -61,13 +69,18 @@ class CheckerboardDisplayApp(QWidget):
         return checkerboard
 
     def resizeEvent(self, event):
-        # Calculate new size while maintaining the aspect ratio of the original pixmap
-        new_width = min(self.width(), self.original_pixmap.width())
-        new_height = int(new_width * (self.original_pixmap.height() / self.original_pixmap.width()))
-
-        # Scale the pixmap to the new size using nearest neighbor interpolation
-        scaled_pixmap = self.original_pixmap.scaled(new_width, new_height, Qt.KeepAspectRatio, Qt.FastTransformation)
-        self.label.setPixmap(scaled_pixmap)
+        # Resize the window to maintain a square aspect ratio
+        new_dimension = min(self.width(), self.height())
+        self.resize(new_dimension, new_dimension)
+        if self.user_resizing:
+            new_dimension = min(self.width(), self.height())
+            self.label.resize(new_dimension, new_dimension)
+            scaled_pixmap = self.original_pixmap.scaled(new_dimension, new_dimension, Qt.IgnoreAspectRatio,
+                                                        Qt.FastTransformation)
+            self.label.setPixmap(scaled_pixmap)
+            self.user_resizing = False
+        else:
+            self.user_resizing = True
 
         super().resizeEvent(event)
 
@@ -76,7 +89,7 @@ class CheckerboardDisplayApp(QWidget):
         file_path, _ = QFileDialog.getSaveFileName(self, "Save Image", "", "JPEG Files (*.jpg);;PNG Files (*.png)",
                                                    options=options)
         if file_path:
-            self.checkerboard_pixmap.save(file_path)
+            self.label.pixmap().save(file_path)
 
 
 if __name__ == '__main__':
