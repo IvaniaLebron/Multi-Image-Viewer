@@ -3,9 +3,11 @@ from PyQt5.QtWidgets import QApplication, QGraphicsView, QGraphicsScene, QGraphi
 from PyQt5.QtGui import QPixmap, QImage, QPainter
 from PyQt5.QtCore import Qt, pyqtSignal
 import cv2
-from PyQt5.QtWidgets import QGraphicsView, QGraphicsScene, QGraphicsPixmapItem
-from PyQt5.QtCore import Qt, pyqtSignal
-from PyQt5.QtGui import QWheelEvent
+
+class DraggableGraphicsPixmapItem(QGraphicsPixmapItem):
+    def __init__(self, pixmap):
+        super(DraggableGraphicsPixmapItem, self).__init__(pixmap)
+        self.setFlag(QGraphicsPixmapItem.ItemIsMovable)
 
 class ZoomableGraphicsView(QGraphicsView):
     zoomChanged = pyqtSignal(float)
@@ -18,26 +20,53 @@ class ZoomableGraphicsView(QGraphicsView):
         self.setTransformationAnchor(QGraphicsView.AnchorUnderMouse)
         self.setResizeAnchor(QGraphicsView.AnchorUnderMouse)
         self.global_zoom_factor = 1.0  # Initialize the global zoom factor
-
         self.setInteractive(True)  # Enable mouse events
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+
+        self.drag_start_pos = None
 
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
-            # Zoom in on left-click
-            self.zoom(1.5)
+            self.drag_start_pos = event.pos()
         elif event.button() == Qt.RightButton:
             # Zoom out on right-click
             self.zoom(1 / 1.5)
 
-    def wheelEvent(self, event: QWheelEvent):
+        super(ZoomableGraphicsView, self).mousePressEvent(event)
+
+    def mouseMoveEvent(self, event):
+        if self.drag_start_pos is not None:
+            # Calculate the movement vector and apply it to all items in the scene
+            delta = event.pos() - self.drag_start_pos
+            for item in self.scene().items():
+                if isinstance(item, DraggableGraphicsPixmapItem):
+                    item.setPos(item.pos() + delta)
+
+            self.drag_start_pos = event.pos()
+
+        super(ZoomableGraphicsView, self).mouseMoveEvent(event)
+
+    def mouseReleaseEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            self.drag_start_pos = None
+
+        super(ZoomableGraphicsView, self).mouseReleaseEvent(event)
+
+    def wheelEvent(self, event):
         # Disable the default wheel behavior to prevent unwanted scrolling
-        event.accept()
+        factor = 1.2
+        if event.angleDelta().y() < 0:
+            factor = 1.0 / factor
+
+        self.setTransform(self.transform().scale(factor, factor))
+        self.global_zoom_factor = self.transform().m11()
+        self.zoomChanged.emit(self.global_zoom_factor)
 
     def zoom(self, factor):
         self.setTransform(self.transform().scale(factor, factor))
         self.global_zoom_factor = self.transform().m11()
         self.zoomChanged.emit(self.global_zoom_factor)
-
 
 class GridDisplayApp(QWidget):
     def __init__(self, image_paths, rows, cols):
@@ -66,12 +95,10 @@ class GridDisplayApp(QWidget):
                     pixmap = self.load_image(image_path)
 
                     scene = QGraphicsScene(self)
-                    item = QGraphicsPixmapItem(pixmap)
+                    item = DraggableGraphicsPixmapItem(pixmap)  # Use the custom item for draggable behavior
                     scene.addItem(item)
 
                     view = ZoomableGraphicsView(scene, self)
-                    view.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-                    view.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
                     grid_layout.addWidget(view, row, col)
 
                     view.zoomChanged.connect(self.handleZoomChange)
@@ -100,8 +127,15 @@ class GridDisplayApp(QWidget):
         img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         height, width, channel = img.shape
         bytes_per_line = 3 * width
+
+        desired_height = self.size().height() / self.rows  # Get the height of the square
+        scaled_width = int(width * (desired_height / height))
+
+        # Creating QImage with specific interpolation method (Qt.AA_Scaled uses bilinear interpolation by default)
         qimg = QImage(img_rgb.data, width, height, bytes_per_line, QImage.Format_RGB888)
-        pixmap = QPixmap.fromImage(qimg)
+        pixmap = QPixmap.fromImage(qimg).scaled(scaled_width, int(desired_height),
+                                               aspectRatioMode=Qt.IgnoreAspectRatio,
+                                               transformMode=Qt.FastTransformation)
         return pixmap
 
     def handleZoomChange(self, zoom_factor):
