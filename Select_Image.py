@@ -97,4 +97,3 @@ if __name__ == '__main__':
     window = SelectImagesApp(effect, default_images)
     window.show()
     sys.exit(app.exec_())
-
